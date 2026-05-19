@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+*.local
+.DS_Store
+.claude/
+.vscode/settings.json
+supabase/.branches
+supabase/.temp

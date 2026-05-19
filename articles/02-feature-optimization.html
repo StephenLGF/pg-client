@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>不动一行代码，AI 帮我搭了一个数据库查询工具（二）：功能优化</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1 {
+            color: #1a1a1a;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #34495e;
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+        .quote {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #555;
+        }
+        .stats {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .stats strong {
+            color: #2980b9;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            color: #e74c3c;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        pre code {
+            background-color: transparent;
+            color: #f8f8f2;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .tip-box {
+            background-color: #e8f5e9;
+            border: 1px solid #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .tip-box h4 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        .file-tree {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>不动一行代码，AI 帮我搭了一个数据库查询工具（二）：功能优化</h1>
+    <p class="subtitle">从"能用"到"好用"——AI 如何一步步把工具打磨得更顺手。</p>
+
+    <hr>
+
+    <h2>上篇回顾</h2>
+    <p>上一篇文章讲了我如何用 AI 从零搭建了一个 PostgreSQL 查询工具。核心成果是：</p>
+    <ul>
+        <li><strong>连接管理</strong>：首页可以配置多个数据库连接，信息存在本地</li>
+        <li><strong>数据库浏览</strong>：连接后左侧栏展示服务器下的所有数据库和表</li>
+        <li><strong>SQL 编辑器</strong>：可以执行任意 SQL 语句</li>
+    </ul>
+    <p>但工具刚搭起来，只能算"能用"，离"好用"还有距离。这一篇记录我如何通过多轮对话，把工具一步步打磨得更顺手。</p>
+
+    <h2>这次优化的目标</h2>
+    <p>我列出了几个明显的体验问题：</p>
+    <ul>
+        <li><strong>路由问题</strong>：刷新页面后连接状态丢失，点击表后 URL 不对</li>
+        <li><strong>界面问题</strong>：左边栏太窄、白色区域太多、滚动条难看</li>
+        <li><strong>功能缺失</strong>：表数据不能排序、不能搜索</li>
+        <li><strong>交互问题</strong>：切换表时应该用 Tab，而不是覆盖当前页面</li>
+    </ul>
+
+    <h2>第一轮对话：修复路由和界面问题</h2>
+    <div class="stats">
+        <strong>本次对话统计</strong>：消耗 Token ~32,000（输入 ~15,000 / 输出 ~17,000），AI 处理耗时约 12 分钟，交互轮次 8 轮
+    </div>
+
+    <h3>我的提问</h3>
+    <div class="quote">
+        1整体使用暗黑风格，2左边栏应该可以滚动 3由原来的库-表的父子树结构 改成两个列的二级结构，并且两个列都支持搜索
+    </div>
+
+    <h3>AI 的工作</h3>
+    <p>AI 把左边栏从树形结构改成了两列布局：</p>
+    <ul>
+        <li>左列：数据库列表（带搜索）</li>
+        <li>右列：表列表（带搜索）</li>
+    </ul>
+    <p>两列都可以独立拖拽调整宽度。</p>
+
+    <h3>我的追问：路由设计不对</h3>
+    <div class="quote">
+        路由设计不对，1现在刷新后没有连接对应的服务器，点击数据表后没有展开 table 比较好的路径是 /server/xx/database/xx/table/xx
+    </div>
+    <p>AI 重构了路由结构：</p>
+    <pre><code>/server/:server                    → SQL 编辑器
+/server/:server/database/:database → SQL 编辑器（选中数据库）
+/server/:server/database/:database/table/:table → 表数据展示</code></pre>
+
+    <h3>我的追问：点击数据库和表没有路由跳转</h3>
+    <div class="quote">
+        点击数据库和数据表都没有做对应的路由跳转啊
+    </div>
+    <p>AI 在 SchemaTree 组件中添加了路由跳转逻辑：</p>
+    <ul>
+        <li>点击数据库 → 跳转到 <code>/server/:server/database/:database</code></li>
+        <li>点击表 → 跳转到 <code>/server/:server/database/:database/table/:table</code></li>
+    </ul>
+
+    <h3>我的追问：接口请求了但数据没渲染</h3>
+    <div class="quote">
+        现在切换数据库的时候 没有请求查表的接口
+    </div>
+    <p><strong>问题</strong>：useDatabase composable 里的 databases、tables、loading 是在函数内部创建的 ref，每次调用都会创建新实例。导致 ServerLayout 设置的值，SchemaTree 看不到。</p>
+    <p><strong>修复方案</strong>：把 refs 提到函数外面，做成模块级单例。</p>
+
+    <h3>我的追问：数据没渲染出来</h3>
+    <div class="quote">
+        现在刷新之后 database加载了 table不加载 table里的数据也不加载
+    </div>
+    <p><strong>问题</strong>：多个 watch 之间有依赖关系，但没有正确监听所有依赖。</p>
+    <p><strong>修复方案</strong>：把所有状态恢复逻辑收到 ServerLayout 一个 watch 里，按顺序执行：连接 → 数据库列表 → 表列表。</p>
+
+    <h2>第二轮对话：添加 Tab 切换功能</h2>
+    <div class="stats">
+        <strong>本次对话统计</strong>：消耗 Token ~18,000（输入 ~8,000 / 输出 ~10,000），AI 处理耗时约 8 分钟，交互轮次 4 轮
+    </div>
+
+    <h3>我的提问</h3>
+    <div class="quote">
+        在表格数据展示的地方 使用tab 切换table的时候创建或者返回对应的tab，注意路由变更
+    </div>
+
+    <h3>AI 的工作</h3>
+    <p>AI 在 <code>AppLayout</code> 中添加了 <code>el-tabs</code> 组件：</p>
+    <ul>
+        <li><strong>固定 Tab</strong>：SQL 编辑器（第一个 tab，不可关闭）</li>
+        <li><strong>动态 Tab</strong>：点击表时创建新 tab，可关闭</li>
+        <li><strong>路由同步</strong>：切换 tab 时更新路由，关闭 tab 时删除路由</li>
+    </ul>
+
+    <h2>第三轮对话：添加排序和搜索功能</h2>
+    <div class="stats">
+        <strong>本次对话统计</strong>：消耗 Token ~25,000（输入 ~12,000 / 输出 ~13,000），AI 处理耗时约 10 分钟，交互轮次 5 轮
+    </div>
+
+    <h3>我的提问</h3>
+    <div class="quote">
+        好，现在给数据的table 每一列的表头加排序按钮，点击触发重新查询
+    </div>
+
+    <h3>AI 的工作</h3>
+    <p>AI 在 <code>el-table-column</code> 上添加了 <code>:sortable="'custom'"</code>，并实现了排序逻辑。</p>
+
+    <h3>我的追问：表头加搜索按钮</h3>
+    <div class="quote">
+        好，再在列头上 做一个搜索按钮，点击后出现搜索框 做匹配搜索，搜索框旁边加开关可以控制做模糊查询
+    </div>
+    <p>AI 在表头添加了搜索功能，支持模糊/精确查询。</p>
+
+    <h2>第四轮对话：Tooltip 优化和表格滚动</h2>
+    <div class="stats">
+        <strong>本次对话统计</strong>：消耗 Token ~15,000（输入 ~7,000 / 输出 ~8,000），AI 处理耗时约 6 分钟，交互轮次 5 轮
+    </div>
+
+    <h3>问题：el-tabs__content 高度一直限制不住</h3>
+    <p>AI 尝试了多种方案，但问题依然存在：</p>
+    <ul>
+        <li>给 <code>.el-tabs__content</code> 添加 <code>flex: 1</code>、<code>min-height: 0</code></li>
+        <li>给 <code>.el-tab-pane</code> 添加 <code>flex: 1</code></li>
+        <li>给 <code>.app-main</code> 添加 <code>overflow: hidden</code></li>
+    </ul>
+
+    <div class="tip-box">
+        <h4>💡 换个方式提示的技巧</h4>
+        <p>当 AI 一直解决不了问题时，我换了个方式提示：</p>
+        <div class="quote">
+            在 Element Plus 中，.el-tabs__content 默认高度是由其内部内容撑开的。请给出修复方案
+        </div>
+        <p>这个提示的关键点：</p>
+        <ul>
+            <li><strong>明确指出组件特性</strong>：.el-tabs__content 默认高度由内容撑开</li>
+            <li><strong>要求给出修复方案</strong>：而不是让 AI 猜测问题</li>
+        </ul>
+        <p>AI 立即理解了问题所在：<code>.el-tabs</code> 本身也需要添加 <code>min-height: 0</code>。</p>
+    </div>
+
+    <h3>技巧总结</h3>
+    <p>当 AI 一直解决不了问题时，可以尝试：</p>
+    <ol>
+        <li><strong>明确指出组件/库的特性</strong>：告诉 AI 这个组件的默认行为是什么</li>
+        <li><strong>提供上下文</strong>：说明问题发生的环境（flex 布局、嵌套结构等）</li>
+        <li><strong>要求给出方案</strong>：而不是让 AI 继续猜测</li>
+    </ol>
+
+    <h2>第五轮对话：UUID 迁移和状态清空</h2>
+    <div class="stats">
+        <strong>本次对话统计</strong>：消耗 Token ~57,000（输入 ~25,000 / 输出 ~32,000），AI 处理耗时约 20 分钟，交互轮次 2 轮
+    </div>
+
+    <h3>我的提问</h3>
+    <div class="quote">
+        修改连接的实现，创建连接的时候，name 是自己输入的，这可能会输入中文或者其他字符影响美观，请用 uuid 做 key，后续的路由都用这个 key
+    </div>
+
+    <h3>AI 的工作</h3>
+    <p>AI 完成了以下修改：</p>
+    <ul>
+        <li><strong>数据库表结构</strong>：将 <code>db_connections.id</code> 从 <code>SERIAL</code> 改为 <code>UUID</code></li>
+        <li><strong>后端路由</strong>：更新所有接口参数类型为 string</li>
+        <li><strong>前端路由</strong>：将 <code>/server/:server</code> 改为 <code>/connection/:connectionId</code></li>
+        <li><strong>状态管理</strong>：更新所有 composables 的参数类型</li>
+    </ul>
+
+    <h3>我的追问：状态清空逻辑</h3>
+    <div class="quote">
+        如果我 url 中没有 connection database 应该清空 通用的没有 database table 也应该清空
+    </div>
+    <p>AI 修改了 <code>useConnections.ts</code> 和 <code>useDatabase.ts</code>：</p>
+    <ul>
+        <li><code>ensureConnection()</code> 现在接受 <code>undefined</code>，没有 <code>connectionId</code> 时清空 <code>activeConnection</code></li>
+        <li><code>fetchDatabases()</code> 和 <code>fetchTables()</code> 现在接受 <code>undefined</code>，没有参数时清空对应列表</li>
+    </ul>
+
+    <h3>成果</h3>
+    <div class="stats">
+        <strong>本轮统计</strong>：Token ~57,000，耗时约 20 分钟
+    </div>
+    <p>实现了 UUID 迁移和状态清空逻辑，路由更加稳定可靠。</p>
+
+    <h2>这次改动的成果</h2>
+    <ul>
+        <li><strong>新增文件</strong>：0 个</li>
+        <li><strong>修改文件</strong>：25 个</li>
+        <li><strong>删除文件</strong>：0 个</li>
+        <li><strong>影响代码行数</strong>：约 1,400 行</li>
+    </ul>
+
+    <h2>最终效果</h2>
+    <h3>界面布局</h3>
+    <ul>
+        <li><strong>顶部</strong>：标题栏（显示当前连接，断开按钮）</li>
+        <li><strong>左侧</strong>：两列浏览器（数据库列表 + 表列表，都支持搜索）</li>
+        <li><strong>右侧</strong>：Tab 区域
+            <ul>
+                <li>第一个 Tab：SQL 编辑器（固定，不可关闭）</li>
+                <li>后续 Tab：表数据（动态创建，可关闭）</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>数据浏览</h3>
+    <ul>
+        <li><strong>排序</strong>：点击表头排序图标，按该列升序/降序</li>
+        <li><strong>搜索</strong>：点击表头搜索图标，输入关键词，支持模糊/精确匹配</li>
+        <li><strong>外键跳转</strong>：点击外键字段，自动跳转到对应表</li>
+        <li><strong>Tooltip</strong>：鼠标悬停显示格式化的 JSON（带缩进和换行）</li>
+    </ul>
+
+    <h3>路由设计</h3>
+    <pre><code>/                                    → 连接管理首页
+/connection/:connectionId            → SQL 编辑器
+/connection/:connectionId/database/:database   → SQL 编辑器（选中数据库）
+/connection/:connectionId/database/:database/table/:table → 表数据</code></pre>
+    <p>刷新页面后状态自动恢复。</p>
+
+    <h2>费用总结</h2>
+    <h3>总计</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>对话</th>
+                <th>Token 消耗</th>
+                <th>AI 处理耗时</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>第一轮：路由和界面修复</td>
+                <td>~32,000</td>
+                <td>~12 分钟</td>
+            </tr>
+            <tr>
+                <td>第二轮：Tab 切换</td>
+                <td>~18,000</td>
+                <td>~8 分钟</td>
+            </tr>
+            <tr>
+                <td>第三轮：排序和搜索</td>
+                <td>~25,000</td>
+                <td>~10 分钟</td>
+            </tr>
+            <tr>
+                <td>第四轮：Tooltip 和滚动</td>
+                <td>~15,000</td>
+                <td>~6 分钟</td>
+            </tr>
+            <tr>
+                <td>第五轮：UUID 迁移和状态清空</td>
+                <td>~57,000</td>
+                <td>~20 分钟</td>
+            </tr>
+            <tr>
+                <td><strong>合计</strong></td>
+                <td><strong>~147,000</strong></td>
+                <td><strong>~56 分钟</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>换算成国内大模型的花费（实际估算）</h3>
+    <p>由于实际对话中包含大量代码阅读、错误调试和反复修改，实际 Token 消耗远超保守估计：</p>
+    <table>
+        <thead>
+            <tr>
+                <th>模型</th>
+                <th>单价（每百万 Token）</th>
+                <th>本次实际花费估算</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Claude Sonnet</td>
+                <td>~$3 / ~$15</td>
+                <td>¥8 - ¥12</td>
+            </tr>
+            <tr>
+                <td>DeepSeek V3</td>
+                <td>¥1 - ¥2</td>
+                <td>¥0.2 - ¥0.3</td>
+            </tr>
+            <tr>
+                <td>通义千问 Max</td>
+                <td>¥2 / ¥6</td>
+                <td>¥0.6 - ¥1.0</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="tip-box">
+        <h4>💡 说明</h4>
+        <p>实际花费估算考虑了以下因素：</p>
+        <ul>
+            <li><strong>代码阅读</strong>：每次修改前都需要读取多个相关文件</li>
+            <li><strong>错误调试</strong>：UUID 迁移时的 <code>MIN(uuid)</code> 错误需要额外对话修复</li>
+            <li><strong>反复修改</strong>：路由参数类型变更涉及多个文件的连锁修改</li>
+            <li><strong>TypeScript 检查</strong>：确保类型安全需要多次验证</li>
+        </ul>
+        <p>实际 Token 消耗可能是保守估计的 1.5-2 倍。</p>
+    </div>
+
+    <h2>我的感受</h2>
+    <h3>1. AI 编程的迭代速度极快</h3>
+    <p>以前自己写代码，改一个功能可能要半天。现在跟 AI 对话，十几分钟就能完成一轮迭代。而且在多轮对话中，一些隐藏的问题会逐渐暴露出来（比如状态管理的单例问题、路由时序问题），通过追问可以逐步定位并解决。</p>
+
+    <h3>2. 问题描述要精确</h3>
+    <p>当 AI 一直解决不了问题时，<span class="highlight">换个方式提示</span>很有效。与其说"高度不对"，不如明确指出"Element Plus 的 .el-tabs__content 默认高度由内容撑开"，让 AI 理解组件特性。</p>
+
+    <h3>3. 不要怕追问</h3>
+    <p>这次对话中我追问了 5 次，AI 都耐心地修复了。有些问题需要多轮对话才能定位根源，这是正常的。</p>
+
+    <h2>下一步计划</h2>
+    <p>目前工具已经比较顺手了，但还有几个可以优化的点：</p>
+    <ul>
+        <li><strong>数据导出</strong>：支持导出查询结果为 CSV/JSON</li>
+        <li><strong>历史记录</strong>：保存执行过的 SQL，方便复用</li>
+        <li><strong>快捷键</strong>：Ctrl+Enter 执行 SQL</li>
+        <li><strong>主题切换</strong>：支持浅色/深色主题切换</li>
+        <li><strong>连接管理优化</strong>：支持连接测试、连接排序、连接分组</li>
+    </ul>
+    <p>这些功能留到第三篇再实现。</p>
+
+    <div class="footer">
+        <p>文章撰写于 2026 年 4 月 9 日</p>
+        <p>使用 AI 编程工具 Claude Code 辅助完成</p>
+    </div>
+</body>
+</html>

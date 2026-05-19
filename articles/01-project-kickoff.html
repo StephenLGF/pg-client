@@ -1,0 +1,221 @@
+<section style="max-width: 677px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 15px; color: #3f3f3f; line-height: 1.8; letter-spacing: 0.5px;">
+
+<h1 style="font-size: 22px; font-weight: 700; color: #333; text-align: center; margin-bottom: 4px;">不动一行代码，AI 帮我搭了一个数据库查询工具（一）：项目启动</h1>
+<p style="text-align: center; font-size: 14px; color: #999; margin-bottom: 20px;">一个人就是一支产品团队。全程零手写代码，用 AI 编程工具从零搭建一个本地 PostgreSQL 查询工具。</p>
+<hr style="border: none; border-top: 1px solid #e8e8e8; margin: 20px 0;" />
+
+<h2 style="font-size: 18px; font-weight: 700; color: #333; border-left: 4px solid #36b; padding-left: 10px; margin: 30px 0 12px;">我是谁</h2>
+<p>先简单介绍下背景。我是一名开发者，日常需要频繁查询 PostgreSQL 数据库。市面上有 pgAdmin、DBeaver 这些工具，但总觉得不够轻量、不够顺手。于是我决定：<strong>自己做一个。</strong>但这次不一样——我不打算自己写一行代码。全程交给 AI 编程工具（Claude Code）来完成。</p>
+
+<h2 style="font-size: 18px; font-weight: 700; color: #333; border-left: 4px solid #36b; padding-left: 10px; margin: 30px 0 12px;">我的想法</h2>
+<p>我要做一个<strong>本地 PostgreSQL 查询工具</strong>，核心功能两个：</p>
+<ul style="padding-left: 20px; margin: 8px 0;">
+  <li><strong>SQL 查询编辑器</strong>：写 SQL，执行，看结果，类似简化版 pgAdmin</li>
+  <li><strong>数据库浏览</strong>：浏览表结构、查看数据、增删改查</li>
+</ul>
+<p>技术栈我选了：</p>
+<ul style="padding-left: 20px; margin: 8px 0;">
+  <li><strong>前端</strong>：Vite + Vue 3 + TypeScript + Supabase</li>
+  <li><strong>后端</strong>：Supabase CLI 提供的本地 PostgreSQL 服务</li>
+  <li><strong>目标</strong>：一条命令 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">npm run dev</code> 启动所有东西</li>
+</ul>
+
+<h2 style="font-size: 18px; font-weight: 700; color: #333; border-left: 4px solid #36b; padding-left: 10px; margin: 30px 0 12px;">第一次对话：项目搭建</h2>
+<p>这是我跟 AI 的第一次对话。下面是完整的交互记录。</p>
+<blockquote style="border-left: 3px solid #ddd; padding: 8px 12px; margin: 12px 0; color: #888; font-size: 14px; background: #fafafa;"><strong>本次对话统计</strong>：消耗 Token ~28,000（输入 ~12,000 / 输出 ~16,000），AI 处理耗时约 8 分钟，交互轮次 4 轮</blockquote>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">我的提问</h3>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">这是一个新项目，我希望你帮我搭建框架。这个项目是用于本地做 pg 数据库查询的。前端用 vite vue3 supabase。我希望一个命令可以启动。后端是不是用 nodejs 比较好？</blockquote>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">AI 的追问</h3>
+<p>AI 问了我三个问题：</p>
+<ol style="padding-left: 20px; margin: 8px 0;">
+  <li><strong>后端框架选择</strong>：Express 还是 Fastify 还是 Hono？</li>
+  <li><strong>语言选择</strong>：TypeScript 还是 JavaScript？</li>
+  <li><strong>项目主要用途</strong>：SQL 编辑器？数据库浏览管理？还是两者都要？</li>
+</ol>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">我的回答</h3>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">后端不是 supabase 的后端吗？已经有服务了。</blockquote>
+<p>这里我澄清了一个关键点：<strong>后端不需要自己写，直接用 Supabase CLI 提供的本地服务。</strong>AI 又追问我用途和语言，我选了：</p>
+<ul style="padding-left: 20px; margin: 8px 0;">
+  <li><strong>两者都需要</strong>（SQL 编辑器 + 数据库浏览）</li>
+  <li><strong>TypeScript</strong></li>
+</ul>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">AI 给出的方案</h3>
+<blockquote style="border-left: 3px solid #ddd; padding: 8px 12px; margin: 12px 0; color: #888; font-size: 14px; background: #fafafa;"><strong>本轮统计</strong>：Token ~15,000（输入 ~8,000 / 输出 ~7,000），耗时约 4 分钟</blockquote>
+<p>AI 花了一些时间分析架构，最终给出了一个让我眼前一亮的方案：</p>
+<p><strong>核心架构：前端直连 + 薄代理</strong></p>
+<pre style="background: #f6f8fa; padding: 14px; border-radius: 6px; font-size: 13px; overflow-x: auto; line-height: 1.6; border: 1px solid #e8e8e8;">┌─────────────┐     ┌──────────────┐     ┌────────────┐
+│  Vue 3 前端  │────▶│ Express 代理  │────▶│ PostgreSQL │
+│  (Vite)     │     │ (50行代码)   │     │ (Supabase) │
+└─────────────┘     └──────────────┘     └────────────┘
+       │
+       ▼
+┌─────────────┐
+│ Supabase JS │  ←  直连浏览表结构
+└─────────────┘</pre>
+<p><strong>为什么要加一个 Express 代理？</strong>因为我想要一个 SQL 编辑器，能执行任意 SQL 语句。但 Supabase 的 JS 客户端不支持执行原生 SQL（通过 RPC 调用有很多限制）。所以 AI 建议加一个极简的 Express 代理服务，大约 50 行代码，用 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">pg</code> 驱动直连 PostgreSQL。这个方案我觉得很聪明——既保留了 Supabase 的便利性，又解决了任意 SQL 执行的问题。</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">项目目录结构</h3>
+<pre style="background: #f6f8fa; padding: 14px; border-radius: 6px; font-size: 13px; overflow-x: auto; line-height: 1.6; border: 1px solid #e8e8e8;">pg-client/
+├── package.json
+├── vite.config.ts
+├── server/                  # Express 代理
+│   ├── index.ts
+│   ├── db.ts
+│   └── routes/query.ts
+├── src/
+│   ├── main.ts
+│   ├── App.vue
+│   ├── composables/         # 业务逻辑
+│   │   ├── useSupabase.ts
+│   │   ├── useQuery.ts
+│   │   └── useDatabase.ts
+│   └── components/          # UI 组件
+│       ├── layout/
+│       ├── editor/          # Monaco SQL 编辑器
+│       ├── results/         # 查询结果表格
+│       └── browser/         # 数据库浏览
+└── supabase/</pre>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">成果</h3>
+<blockquote style="border-left: 3px solid #ddd; padding: 8px 12px; margin: 12px 0; color: #888; font-size: 14px; background: #fafafa;"><strong>本轮统计</strong>：Token ~13,000（输入 ~4,000 / 输出 ~9,000），耗时约 4 分钟</blockquote>
+<p>AI 一口气创建了 <strong>19 个文件</strong>：</p>
+<ul style="padding-left: 20px; margin: 8px 0;">
+  <li>项目配置：5 个文件（package.json、tsconfig、.gitignore、index.html、vite.config.ts）</li>
+  <li>Express 代理服务：3 个文件</li>
+  <li>Vue 基础：6 个文件（入口、类型、composables）</li>
+  <li>UI 组件：8 个文件（布局、编辑器、结果展示、数据库浏览）</li>
+</ul>
+<p style="color: #999; font-size: 13px;">📸 项目文件结构截图</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">启动方式</h3>
+<pre style="background: #f6f8fa; padding: 14px; border-radius: 6px; font-size: 13px; overflow-x: auto; line-height: 1.6; border: 1px solid #e8e8e8;">npm run dev</pre>
+<p>一条命令搞定。底层流程：先启动 Supabase 本地服务（PostgreSQL + API），再并行启动 Vite（前端，端口 5173）+ Express（代理，端口 3001）。</p>
+<p style="color: #999; font-size: 13px;">📸 终端启动成功的截图</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">过程中的小插曲</h3>
+<p>安装依赖的时候遇到了一个问题：Supabase CLI 的 npm 包会在 postinstall 阶段下载二进制文件，因为网络问题失败了。AI 的处理方式很干脆：把 Supabase CLI 从项目依赖中移除，改用 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">npx supabase</code> 调用。脚本也全部改成了 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">npx supabase xxx</code>。问题解决。</p>
+
+<hr style="border: none; border-top: 1px solid #e8e8e8; margin: 30px 0;" />
+
+<h2 style="font-size: 18px; font-weight: 700; color: #333; border-left: 4px solid #36b; padding-left: 10px; margin: 30px 0 12px;">第二次对话：去掉 Supabase，加连接管理</h2>
+<p>项目跑起来之后，我发现一个问题：工具只能连 Supabase 本地的数据库，不能连其他 PostgreSQL 服务。而且连接信息是硬编码的，每次想换一个数据库都要改代码。所以我又找 AI 做了一次比较大的改动。</p>
+<blockquote style="border-left: 3px solid #ddd; padding: 8px 12px; margin: 12px 0; color: #888; font-size: 14px; background: #fafafa;"><strong>本次对话统计</strong>：消耗 Token ~45,000（输入 ~22,000 / 输出 ~23,000），AI 处理耗时约 15 分钟，交互轮次 6 轮</blockquote>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">我的提问（第一轮）</h3>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">在后端服务中直接连接本地数据库，然后我需要你实现一个功能，页面的首页是配置不同数据库服务地址 端口 密码的地方，帮我实现对应的页面，接口。这些信息存在本地数据库，你需要自己设计表结构。</blockquote>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">AI 的工作</h3>
+<p>AI 先做了一轮代码探索，读了所有现有文件（后端 3 个文件 + 前端 14 个文件），然后进入规划模式，输出了一个完整的实施方案。方案包含四步：建一张 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">db_connections</code> 表存连接配置、后端实现连接的增删改查接口、后端做一个动态连接池管理器支持多个数据库同时连接、前端做一个连接管理页面作为新首页。</p>
+<p>AI 完成后我打开页面看了一下，功能基本能用，但发现了几个问题。</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">发现问题：新建连接时没法测连接</h3>
+<p>连接管理页面做出来了，但我发现新建连接的对话框里没有"测试连接"按钮，只有编辑已保存的连接时才有。也就是说我必须先保存，才能知道连得上连不上。这不对。</p>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">我的追问：创建服务器连接的时候应该有个测试连接的按钮。</blockquote>
+<p>AI 新增了一个 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">POST /api/connections/test</code> 接口，直接接收表单参数测试，不依赖数据库里已有的记录。前端对话框也改成了新建和编辑都能点"测试连接"。</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">发现问题：连接绑死了一个数据库</h3>
+<p>我试了一下，发现创建连接时必须填"数据库"这个字段。但我的 PostgreSQL 服务上有好几个库，我不想每次新建连接都指定一个库。连上服务器后，我应该能看到所有数据库，再选一个进去。</p>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">我的追问：数据库是必须提供的吗？一个服务下可能有多个数据库，连接服务器后左边栏也应该显示多个数据库。</blockquote>
+<p>AI 做了几个改动：<code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">db_connections</code> 表的 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">database</code> 字段改成可为空、后端新增 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">GET /api/databases</code> 接口连接服务器后自动列出所有数据库、连接池改为按 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">connectionId:database</code> 双重 key 缓存、前端侧边栏从"库 → 表"两级变成"服务器 → 数据库 → 表"三级、创建连接的表单里去掉了"数据库"字段。</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">确认一下连接配置存在哪</h3>
+<p>改完之后我突然想到一个问题：这些连接配置存在哪个数据库里？</p>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">我的追问：你现在数据存放的数据库是哪个？</blockquote>
+<p>答案是 Supabase 本地 Postgres（127.0.0.1:54322），连接配置表建在它的 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">public</code> schema 下。也就是说，<code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">db_connections</code> 表和我用 Supabase 管理的业务表在同一个库里。</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">发现问题：默认连接没显示</h3>
+<p>我知道了配置存在 Supabase 本地库之后，就想让这个库作为一条默认连接，始终显示在首页。但我打开页面发现列表是空的——虽然连接配置表里已经有数据了，但因为之前我让 AI 去掉了"数据库"字段，这条默认记录的 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">database</code> 字段是 null，没有被正确展示。</p>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">我的追问：把这个数据库作为默认服务器，显示在首页并提供访问吧。</blockquote>
+<p>AI 改成了启动时自动检查，如果没有 127.0.0.1:54322 的记录就插入一条，并且在前端给它打上"默认"标签，不可删除。</p>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">发现问题：默认连接显示了两条</h3>
+<p>重启后端后，首页出现了两条一模一样的"Supabase 本地"连接。原因是之前 AI 有两轮代码都做了插入默认连接的逻辑，导致重复插入。</p>
+<blockquote style="border-left: 3px solid #e07; padding: 10px 14px; margin: 12px 0; background: #fef8f8; font-size: 14px; color: #555;">我的追问：首页现在显示两个默认了。</blockquote>
+<p>AI 用 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">host+port</code> 去重的方式修了这个问题——启动时先按 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;">host+port</code> 分组删除重复记录，再确保至少有一条。重启后端后恢复正常。</p>
+
+<hr style="border: none; border-top: 1px solid #e8e8e8; margin: 30px 0;" />
+
+<h2 style="font-size: 18px; font-weight: 700; color: #333; border-left: 4px solid #36b; padding-left: 10px; margin: 30px 0 12px;">这次改动的成果</h2>
+<ul style="padding-left: 20px; margin: 8px 0;">
+  <li>新增文件：4 个（poolManager.ts、connections.ts、useConnections.ts、ConnectionManager.vue）</li>
+  <li>修改文件：9 个（后端 3 个 + 前端 6 个）</li>
+  <li>删除文件：2 个（useSupabase.ts、env.ts）</li>
+  <li>影响代码行数：约 1,160 行</li>
+</ul>
+<p style="color: #999; font-size: 13px;">📸 连接管理首页截图</p>
+
+<h2 style="font-size: 18px; font-weight: 700; color: #333; border-left: 4px solid #36b; padding-left: 10px; margin: 30px 0 12px;">最终效果</h2>
+<p>首页是连接管理列表，内置一条 Supabase 本地连接（带"默认"标签，不可删除）。点击"连接"后进入 SQL 编辑器界面，左侧栏展示该服务器下的所有数据库，点击数据库展开表列表。</p>
+
+<hr style="border: none; border-top: 1px solid #e8e8e8; margin: 30px 0;" />
+
+<h2 style="font-size: 18px; font-weight: 700; color: #333; border-left: 4px solid #36b; padding-left: 10px; margin: 30px 0 12px;">费用总结</h2>
+<table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0;">
+  <thead>
+    <tr style="background: #f6f8fa;">
+      <th style="border: 1px solid #e8e8e8; padding: 8px 10px; text-align: left; font-weight: 600;">对话</th>
+      <th style="border: 1px solid #e8e8e8; padding: 8px 10px; text-align: left; font-weight: 600;">Token 消耗</th>
+      <th style="border: 1px solid #e8e8e8; padding: 8px 10px; text-align: left; font-weight: 600;">AI 处理耗时</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">第一次：项目搭建</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">~28,000</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">~8 分钟</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">第二次：连接管理</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">~45,000</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">~15 分钟</td>
+    </tr>
+    <tr style="background: #f6f8fa; font-weight: 600;">
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">合计</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">~73,000</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">~23 分钟</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 style="font-size: 16px; font-weight: 600; color: #444; margin: 20px 0 8px;">换算成国内大模型的花费</h3>
+<p>以 Claude Code 当前模型（Sonnet）的定价为基准，73,000 Token 大约花费 <strong>$0.3 - $0.5</strong>（约 ¥2 - ¥3）。如果用国内大模型替代：</p>
+<table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0;">
+  <thead>
+    <tr style="background: #f6f8fa;">
+      <th style="border: 1px solid #e8e8e8; padding: 8px 10px; text-align: left; font-weight: 600;">模型</th>
+      <th style="border: 1px solid #e8e8e8; padding: 8px 10px; text-align: left; font-weight: 600;">单价（每百万 Token）</th>
+      <th style="border: 1px solid #e8e8e8; padding: 8px 10px; text-align: left; font-weight: 600;">本次花费</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">Claude Sonnet</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">~$3 / ~$15</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">¥2 - ¥3</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">DeepSeek V3</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">¥1 - ¥2</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">¥0.1 左右</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">通义千问 Max</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">¥2 / ¥6</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">¥0.2 - ¥0.5</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">智谱 GLM-4</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">¥5 / ¥15</td>
+      <td style="border: 1px solid #e8e8e8; padding: 8px 10px;">¥0.4 - ¥1</td>
+    </tr>
+  </tbody>
+</table>
+<p style="font-size: 13px; color: #999;">注：上表为 API 直接调用价格。</p>
+<p>从费用角度看，这个项目两次对话用 Claude API 花了不到 3 块钱。如果用 DeepSeek，可能不到 1 毛钱。</p>
+<p style="color: #999; font-size: 13px;">📸 可以用连接管理页面截图作为封面</p>
+
+</section>
