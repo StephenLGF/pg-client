@@ -2,7 +2,27 @@
   <div class="connection-manager">
     <div class="cm-header">
       <h2>数据库连接</h2>
-      <el-button type="primary" @click="openDialog()">新建连接</el-button>
+      <div class="cm-actions">
+        <el-dropdown trigger="click" @command="(cmd: Theme) => theme = cmd">
+          <el-button text>
+            <el-icon><component :is="themeIcon" /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="light" :class="{ active: theme === 'light' }">
+                <el-icon><Sunny /></el-icon> 浅色
+              </el-dropdown-item>
+              <el-dropdown-item command="dark" :class="{ active: theme === 'dark' }">
+                <el-icon><Moon /></el-icon> 深色
+              </el-dropdown-item>
+              <el-dropdown-item command="auto" :class="{ active: theme === 'auto' }">
+                <el-icon><Monitor /></el-icon> 跟随系统
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button type="primary" @click="openDialog()">新建连接</el-button>
+      </div>
     </div>
 
     <el-alert
@@ -86,9 +106,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Sunny, Moon, Monitor } from '@element-plus/icons-vue'
 import { useConnections } from '../../composables/useConnections'
+import { useTheme, type Theme } from '../../composables/useTheme'
 import type { DbConnection } from '../../types'
 
 const emit = defineEmits<{
@@ -103,6 +125,13 @@ const {
   deleteConnection,
   testConnectionByForm,
 } = useConnections()
+const { theme } = useTheme()
+
+const themeIcon = computed(() => {
+  if (theme.value === 'light') return Sunny
+  if (theme.value === 'dark') return Moon
+  return Monitor
+})
 
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -212,6 +241,12 @@ function onConnect(conn: DbConnection) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+}
+
+.cm-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .storage-alert {
