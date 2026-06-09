@@ -3,8 +3,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as monaco from 'monaco-editor'
+import { useTheme } from '../../composables/useTheme'
 
 const emit = defineEmits<{
   run: []
@@ -12,6 +13,13 @@ const emit = defineEmits<{
 
 const containerRef = ref<HTMLElement>()
 let editor: monaco.editor.IStandaloneCodeEditor | null = null
+
+const { theme } = useTheme()
+
+function getMonacoTheme(): string {
+  const isDark = document.documentElement.classList.contains('dark')
+  return isDark ? 'vs-dark' : 'vs'
+}
 
 function getValue(): string {
   return editor?.getValue() || ''
@@ -49,7 +57,7 @@ onMounted(() => {
   editor = monaco.editor.create(containerRef.value, {
     value: '-- Write your SQL here\nSELECT 1;\n',
     language: 'pgsql',
-    theme: 'vs-dark',
+    theme: getMonacoTheme(),
     minimap: { enabled: false },
     fontSize: 14,
     lineNumbers: 'on',
@@ -63,6 +71,12 @@ onMounted(() => {
   })
 })
 
+watch(theme, () => {
+  if (editor) {
+    monaco.editor.setTheme(getMonacoTheme())
+  }
+})
+
 onUnmounted(() => {
   editor?.dispose()
 })
@@ -72,7 +86,7 @@ onUnmounted(() => {
 .sql-editor {
   flex: 1;
   min-height: 200px;
-  border: 1px solid #333;
+  border: 1px solid var(--el-border-color);
   border-radius: 4px;
   overflow: hidden;
 }

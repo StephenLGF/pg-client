@@ -217,12 +217,12 @@ function onSelectTable(schemaName: string, tableName: string) {
 .col-resizer {
   width: 4px;
   cursor: col-resize;
-  background: #333;
+  background: var(--el-border-color);
   flex-shrink: 0;
 }
 
 .col-resizer:hover {
-  background: #0e639c;
+  background: var(--el-color-primary);
 }
 
 .col-header {
@@ -252,7 +252,7 @@ function onSelectTable(schemaName: string, tableName: string) {
   gap: 6px;
   padding: 6px 12px;
   font-size: 13px;
-  color: #ccc;
+  color: var(--el-text-color-primary);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -260,17 +260,17 @@ function onSelectTable(schemaName: string, tableName: string) {
 }
 
 .col-item:hover {
-  background: #37373d;
+  background: var(--el-fill-color-light);
 }
 
 .col-item.active {
-  background: #094771;
-  color: #fff;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 
 .item-icon {
   font-size: 14px;
-  color: #888;
+  color: var(--el-text-color-secondary);
   flex-shrink: 0;
 }
 
@@ -283,6 +283,6 @@ function onSelectTable(schemaName: string, tableName: string) {
   padding: 12px;
   text-align: center;
   font-size: 12px;
-  color: #666;
+  color: var(--el-text-color-placeholder);
 }
 </style>

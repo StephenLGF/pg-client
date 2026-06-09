@@ -204,7 +204,7 @@ function onConnect(conn: DbConnection) {
   max-width: 1200px;
   margin: 40px auto;
   padding: 0 20px;
-  color: #ccc;
+  color: var(--el-text-color-primary);
 }
 
 .cm-header {
@@ -221,7 +221,7 @@ function onConnect(conn: DbConnection) {
 .cm-header h2 {
   margin: 0;
   font-size: 20px;
-  color: #ccc;
+  color: var(--el-text-color-primary);
 }
 
 .cards-grid {
@@ -231,8 +231,8 @@ function onConnect(conn: DbConnection) {
 }
 
 .connection-card {
-  background: #2d2d2d;
-  border: 1px solid #3d3d3d;
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
   padding: 16px;
   cursor: pointer;
@@ -242,8 +242,8 @@ function onConnect(conn: DbConnection) {
 }
 
 .connection-card:hover {
-  border-color: #0e639c;
-  background: #333;
+  border-color: var(--el-color-primary);
+  background: var(--el-fill-color);
 }
 
 .card-header {
@@ -256,7 +256,7 @@ function onConnect(conn: DbConnection) {
 .card-title {
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: var(--el-text-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -275,12 +275,12 @@ function onConnect(conn: DbConnection) {
 }
 
 .card-info .label {
-  color: #888;
+  color: var(--el-text-color-secondary);
   flex-shrink: 0;
 }
 
 .card-info .value {
-  color: #ccc;
+  color: var(--el-text-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -290,6 +290,6 @@ function onConnect(conn: DbConnection) {
   display: flex;
   gap: 8px;
   padding-top: 12px;
-  border-top: 1px solid #3d3d3d;
+  border-top: 1px solid var(--el-border-color);
 }
 </style>

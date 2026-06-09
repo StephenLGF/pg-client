@@ -23,10 +23,10 @@ defineProps<{
   gap: 8px;
   padding: 6px 0;
   font-size: 12px;
-  color: #888;
+  color: var(--el-text-color-secondary);
 }
 
 .separator {
-  color: #555;
+  color: var(--el-border-color-darker);
 }
 </style>

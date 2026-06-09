@@ -343,16 +343,16 @@ watch(
 
 .search-icon {
   cursor: pointer;
-  color: #888;
+  color: var(--el-text-color-placeholder);
   padding: 2px;
 }
 
 .search-icon:hover {
-  color: #ccc;
+  color: var(--el-text-color-primary);
 }
 
 .search-icon.active {
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 
 .search-popover {

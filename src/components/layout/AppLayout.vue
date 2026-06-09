@@ -269,12 +269,12 @@ function startResize(e: MouseEvent) {
 }
 
 .app-header {
-  background: #1e1e1e;
-  color: #ccc;
+  background: var(--el-bg-color);
+  color: var(--el-text-color-primary);
   display: flex;
   align-items: center;
   padding: 0 16px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .app-body {
@@ -282,7 +282,7 @@ function startResize(e: MouseEvent) {
 }
 
 .app-sidebar {
-  background: #252526;
+  background: var(--el-bg-color-page);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -290,16 +290,16 @@ function startResize(e: MouseEvent) {
 .sidebar-resizer {
   width: 4px;
   cursor: col-resize;
-  background: #333;
+  background: var(--el-border-color);
   flex-shrink: 0;
 }
 
 .sidebar-resizer:hover {
-  background: #0e639c;
+  background: var(--el-color-primary);
 }
 
 .app-main {
-  background: #1e1e1e;
+  background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -317,7 +317,7 @@ function startResize(e: MouseEvent) {
 
 .app-main > .el-tabs > .el-tabs__header {
   margin: 0;
-  background: #252526;
+  background: var(--el-bg-color-page);
   flex-shrink: 0;
 }
 
