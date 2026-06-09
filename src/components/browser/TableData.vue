@@ -71,13 +71,15 @@
         </template>
       </el-table-column>
     </el-table>
-    <div v-if="total && total > pageSize" class="table-pagination">
+    <div v-if="total !== null && total > 0" class="table-pagination">
       <el-pagination
-        :current-page="page"
-        :page-size="pageSize"
+        v-model:current-page="page"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
         :total="total"
-        layout="prev, pager, next"
+        layout="total, sizes, prev, pager, next"
         small
+        @size-change="onSizeChange"
         @current-change="onPageChange"
       />
     </div>
@@ -111,7 +113,7 @@ const rows = ref<any[]>([])
 const columns = ref<string[]>([])
 const total = ref<number | null>(null)
 const page = ref(1)
-const pageSize = 20
+const pageSize = ref(20)
 const sortColumn = ref<string>('')
 const sortOrder = ref<'ASC' | 'DESC' | ''>('')
 
@@ -156,7 +158,7 @@ async function loadData() {
       props.schemaName,
       props.tableName,
       page.value,
-      pageSize,
+      pageSize.value,
       sortColumn.value,
       sortOrder.value,
       searchConditions
@@ -205,6 +207,12 @@ function getCellTooltip(value: any): string {
 
 function onPageChange(p: number) {
   page.value = p
+  loadData()
+}
+
+function onSizeChange(size: number) {
+  pageSize.value = size
+  page.value = 1
   loadData()
 }
 
