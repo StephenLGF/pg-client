@@ -1,8 +1,5 @@
 <template>
   <el-container class="app-container">
-    <el-header class="app-header" height="48px">
-      <AppHeader @disconnect="onDisconnect" />
-    </el-header>
     <el-container class="app-body">
       <div class="app-sidebar" :style="{ width: sidebarWidth + 'px' }">
         <AppSidebar @select-table="onSelectTable" />
@@ -56,7 +53,6 @@
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Grid, Edit } from '@element-plus/icons-vue'
-import AppHeader from './AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
 import TableData from '../browser/TableData.vue'
 import QueryView from '../../views/Query.vue'
@@ -65,7 +61,7 @@ import { useDatabase } from '../../composables/useDatabase'
 
 const router = useRouter()
 const route = useRoute()
-const { disconnect, activeConnection } = useConnections()
+const { activeConnection } = useConnections()
 const { activeDatabase } = useDatabase()
 const sidebarWidth = ref(300)
 
@@ -234,13 +230,6 @@ function onTabRemove(tabKey: string) {
   }
 }
 
-function onDisconnect() {
-  disconnect()
-  tableTabs.value = []
-  activeTab.value = 'query'
-  router.push('/')
-}
-
 function startResize(e: MouseEvent) {
   const startX = e.clientX
   const startWidth = sidebarWidth.value
@@ -268,17 +257,8 @@ function startResize(e: MouseEvent) {
   height: 100%;
 }
 
-.app-header {
-  background: var(--el-bg-color);
-  color: var(--el-text-color-primary);
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--el-border-color);
-}
-
 .app-body {
-  height: calc(100% - 48px);
+  height: 100%;
 }
 
 .app-sidebar {
