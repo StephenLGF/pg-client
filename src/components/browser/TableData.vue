@@ -113,7 +113,7 @@ const rows = ref<any[]>([])
 const columns = ref<string[]>([])
 const total = ref<number | null>(null)
 const page = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 const sortColumn = ref<string>('')
 const sortOrder = ref<'ASC' | 'DESC' | ''>('')
 
