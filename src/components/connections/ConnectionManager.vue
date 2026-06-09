@@ -10,7 +10,7 @@
       type="info"
       :closable="false"
       show-icon
-      title="连接信息保存在当前浏览器的 localStorage 中。"
+      title="连接信息保存在后端 data/connections.json 中。"
     />
 
     <!-- 卡片网格布局，一行4个 -->
@@ -151,10 +151,10 @@ async function onSave() {
   try {
     if (isEdit.value && editId.value) {
       await updateConnection(editId.value, form)
-      ElMessage.success('连接已保存在浏览器本地')
+      ElMessage.success('连接已保存')
     } else {
       await createConnection(form)
-      ElMessage.success('连接已保存在浏览器本地')
+      ElMessage.success('连接已保存')
     }
     dialogVisible.value = false
     await fetchConnections()

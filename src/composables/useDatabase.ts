@@ -12,7 +12,7 @@ const DEFAULT_SCHEMA = 'public'
 
 export function useDatabase() {
   const route = useRoute()
-  const { activeConnection, getConnectionRequestHeaders } = useConnections()
+  const { activeConnection } = useConnections()
   const activeDatabase = computed(() => route.params.database as string || selectedDatabase.value)
   const activeSchema = computed(() => route.params.schema as string || (activeDatabase.value ? DEFAULT_SCHEMA : null))
 
@@ -30,9 +30,7 @@ export function useDatabase() {
     }
     loading.value = true
     try {
-      const res = await fetch(`/api/databases?connectionId=${connectionId}`, {
-        headers: getConnectionRequestHeaders(activeConnection.value),
-      })
+      const res = await fetch(`/api/databases?connectionId=${connectionId}`)
       const data = await res.json()
       databases.value = data || []
     } finally {
@@ -49,9 +47,7 @@ export function useDatabase() {
     loading.value = true
     try {
       const params = new URLSearchParams({ connectionId, database })
-      const res = await fetch(`/api/schemas?${params}`, {
-        headers: getConnectionRequestHeaders(activeConnection.value),
-      })
+      const res = await fetch(`/api/schemas?${params}`)
       const data = await res.json()
       schemas.value = data || []
     } finally {
@@ -69,9 +65,7 @@ export function useDatabase() {
     loading.value = true
     try {
       const params = new URLSearchParams({ connectionId, database, schema: targetSchema })
-      const res = await fetch(`/api/tables?${params}`, {
-        headers: getConnectionRequestHeaders(activeConnection.value),
-      })
+      const res = await fetch(`/api/tables?${params}`)
       const data = await res.json()
       tables.value = data || []
     } finally {
@@ -111,7 +105,6 @@ export function useDatabase() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getConnectionRequestHeaders(activeConnection.value),
         },
         body: JSON.stringify({
           sql: `SELECT * FROM ${qualifiedTable}${whereClause}${orderBy} LIMIT ${pageSize} OFFSET ${offset}`,
@@ -123,7 +116,6 @@ export function useDatabase() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getConnectionRequestHeaders(activeConnection.value),
         },
         body: JSON.stringify({
           sql: `SELECT COUNT(*) AS count FROM ${qualifiedTable}${whereClause}`,
@@ -145,9 +137,7 @@ export function useDatabase() {
 
   async function fetchColumns(connectionId: string, database: string, schema: string, table: string) {
     const params = new URLSearchParams({ connectionId, database, schema, table })
-    const res = await fetch(`/api/columns?${params}`, {
-      headers: getConnectionRequestHeaders(activeConnection.value),
-    })
+    const res = await fetch(`/api/columns?${params}`)
     return await res.json()
   }
 

@@ -7,3 +7,10 @@ dist
 .vscode/settings.json
 supabase/.branches
 supabase/.temp
+
+# 本地数据文件（连接配置）
+data/
+
+# 日志文件
+app.log
+*.log

@@ -21,19 +21,6 @@ function normalizeConnectionConfig(config: Partial<ConnectionConfig>): Connectio
   }
 }
 
-export function decodeConnectionConfigHeader(value: string | string[] | undefined): ConnectionConfig | null {
-  const raw = Array.isArray(value) ? value[0] : value
-  if (!raw) return null
-  try {
-    const json = Buffer.from(raw, 'base64').toString('utf8')
-    const parsed = JSON.parse(json)
-    if (!parsed?.host) return null
-    return normalizeConnectionConfig(parsed)
-  } catch {
-    return null
-  }
-}
-
 function getConnectionConfig(clientConfig?: ConnectionConfig) {
   if (!clientConfig) {
     throw new Error('Connection config is required')

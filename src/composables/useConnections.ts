@@ -19,21 +19,9 @@ interface LocalConnection extends DbConnection {
 
 const connections = ref<LocalConnection[]>([])
 const activeConnection = ref<LocalConnection | null>(null)
-const LOCAL_CONNECTIONS_KEY = 'pg-client.connections'
-const ACTIVE_CONNECTION_KEY = 'pg-client.active-connection-id'
-
-function canUseLocalStorage() {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
-}
 
 function nowIso() {
   return new Date().toISOString()
-}
-
-function createId() {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `local-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
 function normalizeConfig(data: ConnectionConfigInput) {
@@ -61,132 +49,55 @@ function normalizeInput(data: ConnectionInput) {
   }
 }
 
-function readLocalConnections(): LocalConnection[] {
-  if (!canUseLocalStorage()) return []
-  try {
-    const raw = window.localStorage.getItem(LOCAL_CONNECTIONS_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .map((item) => ({
-        id: String(item.id || createId()),
-        name: String(item.name || ''),
-        host: String(item.host || ''),
-        port: Number(item.port || 5432),
-        database: item.database ?? null,
-        username: String(item.username || 'postgres'),
-        password: String(item.password || ''),
-        created_at: String(item.created_at || nowIso()),
-        updated_at: String(item.updated_at || nowIso()),
-      }))
-      .filter((item) => item.name && item.host)
-  } catch {
-    return []
-  }
-}
-
-function saveLocalConnections(list: LocalConnection[]) {
-  if (!canUseLocalStorage()) return
-  window.localStorage.setItem(LOCAL_CONNECTIONS_KEY, JSON.stringify(list))
-}
-
-function cloneConnection(conn: LocalConnection): LocalConnection {
-  return { ...conn }
-}
-
-function syncActiveConnection(id?: string) {
-  if (!id) {
-    activeConnection.value = null
-    return
-  }
-  const refreshed = connections.value.find((item) => item.id === id)
-  activeConnection.value = refreshed || null
-}
-
-function persistLocalConnection(conn: LocalConnection) {
-  const list = readLocalConnections()
-  const idx = list.findIndex((item) => item.id === conn.id)
-  if (idx === -1) {
-    list.push(conn)
-  } else {
-    list[idx] = conn
-  }
-  saveLocalConnections(list)
-  connections.value = list.map(cloneConnection)
-  if (activeConnection.value?.id === conn.id) {
-    syncActiveConnection(conn.id)
-  }
-}
-
-function removeLocalConnection(id: string) {
-  const list = readLocalConnections().filter((item) => item.id !== id)
-  saveLocalConnections(list)
-  connections.value = list.map(cloneConnection)
-  if (activeConnection.value?.id === id) {
-    activeConnection.value = null
-  }
-}
-
-function encodeConnectionConfig(conn: LocalConnection): string {
-  const payload = JSON.stringify({
-    host: conn.host,
-    port: conn.port,
-    database: conn.database || undefined,
-    username: conn.username,
-    password: conn.password,
-  })
-  return btoa(String.fromCharCode(...new TextEncoder().encode(payload)))
-}
-
-function loadFromStorage() {
-  connections.value = readLocalConnections().map(cloneConnection)
-  if (!canUseLocalStorage()) return
-  const activeId = window.localStorage.getItem(ACTIVE_CONNECTION_KEY)
-  if (activeId) {
-    syncActiveConnection(activeId)
-  } else {
-    activeConnection.value = connections.value[0] || null
-  }
-}
-
 export function useConnections() {
   async function fetchConnections() {
-    loadFromStorage()
+    const res = await fetch('/api/connections')
+    const data = await res.json()
+    connections.value = Array.isArray(data) ? data : []
   }
 
   async function createConnection(data: ConnectionInput) {
     const normalized = normalizeInput(data)
-    const conn: LocalConnection = {
-      id: createId(),
-      ...normalized,
-      created_at: nowIso(),
-      updated_at: nowIso(),
-    }
-    persistLocalConnection(conn)
+    const res = await fetch('/api/connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(normalized),
+    })
+    const conn = await res.json()
+    if (!res.ok) throw new Error(conn.error || 'Failed to create connection')
+    connections.value.push(conn)
     return conn
   }
 
   async function updateConnection(id: string, data: ConnectionInput) {
     const normalized = normalizeInput(data)
-    const list = readLocalConnections()
-    const existing = list.find((item) => item.id === id)
-    if (!existing) {
-      throw new Error('Connection not found')
+    const res = await fetch(`/api/connections/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(normalized),
+    })
+    const updated = await res.json()
+    if (!res.ok) throw new Error(updated.error || 'Failed to update connection')
+    const idx = connections.value.findIndex((c) => c.id === id)
+    if (idx !== -1) {
+      connections.value[idx] = updated
     }
-    const updated: LocalConnection = {
-      ...existing,
-      ...normalized,
-      id,
-      created_at: existing.created_at,
-      updated_at: nowIso(),
+    if (activeConnection.value?.id === id) {
+      activeConnection.value = updated
     }
-    persistLocalConnection(updated)
     return updated
   }
 
   async function deleteConnection(id: string) {
-    removeLocalConnection(id)
+    const res = await fetch(`/api/connections/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error || 'Failed to delete connection')
+    }
+    connections.value = connections.value.filter((c) => c.id !== id)
+    if (activeConnection.value?.id === id) {
+      activeConnection.value = null
+    }
   }
 
   async function testConnection(id: string): Promise<{ success: boolean; error?: string }> {
@@ -219,16 +130,10 @@ export function useConnections() {
 
   function selectConnection(conn: DbConnection) {
     activeConnection.value = conn as LocalConnection
-    if (canUseLocalStorage()) {
-      window.localStorage.setItem(ACTIVE_CONNECTION_KEY, conn.id)
-    }
   }
 
   function disconnect() {
     activeConnection.value = null
-    if (canUseLocalStorage()) {
-      window.localStorage.removeItem(ACTIVE_CONNECTION_KEY)
-    }
   }
 
   async function ensureConnection(connectionId: string | undefined): Promise<LocalConnection | null> {
@@ -239,20 +144,14 @@ export function useConnections() {
     if (activeConnection.value?.id === connectionId) {
       return activeConnection.value
     }
-    loadFromStorage()
+    // 如果没有缓存，先拉取一次
+    if (connections.value.length === 0) {
+      await fetchConnections()
+    }
     const conn = connections.value.find((c) => c.id === connectionId) || null
     activeConnection.value = conn
     return conn
   }
-
-  function getConnectionRequestHeaders(conn?: LocalConnection | null): Record<string, string> {
-    if (!conn) return {}
-    return {
-      'x-pg-connection-config': encodeConnectionConfig(conn),
-    }
-  }
-
-  loadFromStorage()
 
   return {
     connections,
@@ -266,6 +165,5 @@ export function useConnections() {
     selectConnection,
     disconnect,
     ensureConnection,
-    getConnectionRequestHeaders,
   }
 }

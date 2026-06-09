@@ -4,7 +4,7 @@ import { useConnections } from './useConnections'
 import { useDatabase } from './useDatabase'
 
 export function useQuery() {
-  const { activeConnection, getConnectionRequestHeaders } = useConnections()
+  const { activeConnection } = useConnections()
   const { activeDatabase } = useDatabase()
   const loading = ref(false)
   const result = ref<QueryResult | null>(null)
@@ -21,7 +21,6 @@ export function useQuery() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getConnectionRequestHeaders(activeConnection.value),
         },
         body: JSON.stringify({ sql, connectionId: activeConnection.value.id, database: activeDatabase.value }),
       })

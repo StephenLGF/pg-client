@@ -5,7 +5,12 @@
   "scripts": {
     "dev": "concurrently -n vite,server -c green,magenta \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite",
-    "dev:server": "tsx watch server/index.ts"
+    "dev:server": "tsx watch server/index.ts",
+    "build": "vite build",
+    "start": "tsx server/index.ts",
+    "start:bg": "nohup tsx server/index.ts > app.log 2>&1 &",
+    "deploy": "npm run build && npm run start:bg",
+    "setup": "npm install && npm run build && npm run start:bg"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.0",
